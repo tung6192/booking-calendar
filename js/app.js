@@ -7,14 +7,11 @@ var a, v, e, clr, r, stickyHeader;
 var options = {
     include: ["score"],
     shouldSort: true,
-    threshold: 0.3,
+    threshold: 0.9,
     location: 0,
     distance: 50,
     maxPatternLength: 32,
     minMatchCharLength: 1,
-    keys: [
-        "title"
-    ]
 };
 
 $(document).ready(function () {
@@ -128,12 +125,11 @@ $(document).ready(function () {
         for (var i = rooms.length - 1; i >= 0; i--) {
             if (event.title != null) {
                 title = removeDiacritics(event.title.toLowerCase());
-                var list = [{"title": title}];
-                var fuse = new Fuse(list, options);
-                var result = fuse.search(rooms[i]);
+                var fuse = new Fuse(rooms, options);
+                var result = fuse.search(event.title.slice(0,12).replace(/\s/g, ''));
                 if (result.length > 0) {
-                    event.room = rooms[i];
-                    return rooms[i];
+                    event.room = rooms[result[0].item];
+                    return event.room;
                 }
             }
         }
@@ -194,5 +190,4 @@ $(document).ready(function () {
         }
 
     })
-
 });

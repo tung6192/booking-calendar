@@ -18,10 +18,10 @@ var colors = {
         'Singapore': '#E53935',
         'Tokyo': '#8E24AA',
         'Vientiane': '#00ACC1',
-        'Booth 1': '#43A047',
-        'Booth 2': '#FFB300',
-        'Booth 3': '#F4511E',
-        'Booth 4': '#E53935',
+        'Booth1': '#43A047',
+        'Booth2': '#FFB300',
+        'Booth3': '#F4511E',
+        'Booth4': '#E53935',
     },
     rooms = ['Abuja', 'Astana', 'Ban tron', 'Bangkok', 'Cebu', 'CEO Room', 'Dhaka', 'Jakarta', 'Kuala Lumpur'
-        ,'Phnompenh', 'Shimane', 'Singapore', 'Tokyo', 'Vientiane', 'Booth 1', 'Booth 2', 'Booth 3', 'Booth 4', 'Other'];
+        ,'Phnompenh', 'Shimane', 'Singapore', 'Tokyo', 'Vientiane', 'Booth1', 'Booth2', 'Booth3', 'Booth4', 'Other'];
