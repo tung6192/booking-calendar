@@ -21,88 +21,101 @@ $(document).ready(function () {
     }
     $('#row-content').append('<td></td>');
 
+    loadEvents();
+
+    function loadEvents(){
+        if(typeof listOfEvents !== "undefined"){
+            setupEvents()
+        }
+        else{
+            setTimeout(loadEvents, 250);
+        }
+    }
+
     // page is now ready, initialize the calendar...
     clr = $('#calendar');
-    $('#calendar').fullCalendar({
-        // put your options and callbacks here
-        header: {
-            right: 'prev,next today',
-            center: 'title'
-        },
-        selectable: false,
-        editable: false,
-        nowIndicator: true,
-        defaultView: 'agendaDay',
-        minTime: '06:00:00',
-        allDaySlot: true,
-        allDayText: 'Room',
+    function setupEvents() {
+        clr.fullCalendar({
+            // put your options and callbacks here
+            header: {
+                right: 'prev,next today',
+                center: 'title'
+            },
+            selectable: false,
+            editable: false,
+            nowIndicator: true,
+            defaultView: 'agendaDay',
+            minTime: '06:00:00',
+            allDaySlot: true,
+            allDayText: 'Room',
+            eventTextColor: 'white',
 
-        // get events from GG API
-        googleCalendarApiKey: googleCalendar.API_KEY,
-        events: {
-            googleCalendarId: googleCalendar.Calendar_Id
-        },
+            // get events from GG API
+            events: listOfEvents,
 
-        // render events
-        eventAfterRender: function (event, element, view) {
-            e = event;
-            r = getRoomName(event);
-            event.end = !event.end ? event.start : event.end;
-            element.css('background-color', colors[r]);
-            element.css('border-color', colors[r]);
-            if (view.type != "month" && event.start.hasTime()) {
+            // render events
+            eventAfterRender: function (event, element, view) {
+                console.log(event)
+                e = event;
+                r = getRoomName(event);
+                event.end = !event.end ? event.start : event.end;
+                element.css('background-color', colors[r]);
+                element.css('border-color', colors[r]);
+                if (view.type != "month" && event.start.hasTime()) {
 
-                // Show bad events
-                bad_event = checkOverlap(event);
-                if (bad_event) {
-                    time_txt = bad_event.start.format("h:mm a") + " - " + bad_event.end.format("h:mm a");
-                    $("#overlap-info").append(bad_event.title + ' - ' + time_txt + '<br>');
+                    // Show bad events
+                    bad_event = checkOverlap(event);
+                    if (bad_event) {
+                        time_txt = bad_event.start.format("h:mm a") + " - " + bad_event.end.format("h:mm a");
+                        $("#overlap-info").append(bad_event.title + ' - ' + time_txt + '<br>');
+                    }
+
+                    // Differentiate past events
+                    element.css('margin-right', 0);
+                    if (event.end < Date.now()) {
+                        element.css('opacity', 0.5);
+                    }
+
+                    // positioning each event
+                    pos = rooms.indexOf(r);
+                    width = 100 / rooms.length;
+
+                    // l - left magrin, r - right margin
+                    l = pos * width;
+                    element.css('left', l + '%');
+                    element.css('width', width + '%');
                 }
 
-                // Differentiate past events
-                element.css('margin-right', 0);
-                if (event.end < Date.now()) {
-                    element.css('opacity', 0.5);
+                // Create box when hover
+                if (!event.tip) {
+                    event.tip = new jBox('Tooltip', {
+                        title: event.title,
+                        content: initDialog(event),
+                        attach: $(element),
+                        closeOnMouseleave: true,
+                        adjustPosition: 'flip',
+                        adjustPosition: {top: 50, right: 5, bottom: 20, left: 5},
+                        repositionOnOpen: true,
+                    });
+                }
+            },
+
+            eventAfterAllRender: function () {
+                var view = clr.fullCalendar('getView');
+                if (view.type == "agendaDay") {
+                    mini.setDate(
+                        clr.fullCalendar('getDate').format("YYYY-MM-DD")
+                    );
                 }
 
-                // positioning each event
-                pos = rooms.indexOf(r);
-                width = 100 / rooms.length;
+            },
 
-                // l - left magrin, r - right margin
-                l = pos * width;
-                element.css('left', l + '%');
-                element.css('width', width + '%');
-            }
+            viewRender: function (view, element) {
+                $("#overlap-info").html("");
+            },
+        });
 
-            // Create box when hover
-            if (!event.tip) {
-                event.tip = new jBox('Tooltip', {
-                    title: event.title,
-                    content: initDialog(event),
-                    attach: $(element),
-                    closeOnMouseleave: true,
-                    adjustPosition: 'flip',
-                    adjustPosition: {top: 50, right: 5, bottom: 20, left: 5},
-                    repositionOnOpen: true,
-                });
-            }
-        },
-
-        eventAfterAllRender: function () {
-            var view = $('#calendar').fullCalendar('getView');
-            if (view.type == "agendaDay") {
-                mini.setDate(
-                    $('#calendar').fullCalendar('getDate').format("YYYY-MM-DD")
-                );
-            }
-
-        },
-
-        viewRender: function (view, element) {
-            $("#overlap-info").html("");
-        },
-    });
+    }
 
     // refetch events after a minute
     setInterval(function () {
@@ -151,7 +164,7 @@ $(document).ready(function () {
             return false;
         }
 
-        var overlap = $('#calendar').fullCalendar('clientEvents', function (ev) {
+        var overlap = clr.fullCalendar('clientEvents', function (ev) {
             if (ev == event)
                 return false;
             var estart = new Date(ev.start);
@@ -175,12 +188,19 @@ $(document).ready(function () {
 
     mini = $("#minicalendar").flatpickr({
         onChange: function (selectedDates, dateStr, instance) {
-            $('#calendar').fullCalendar('gotoDate', new Date(dateStr));
+            console.log(dateStr)
+            getEvents(dateStr)
+            setTimeout(function() {
+                clr.fullCalendar('gotoDate', new Date(dateStr));
+                clr.fullCalendar('removeEvents');
+                clr.fullCalendar('addEventSource', listOfEvents);
+            }, 1500);
+
         }
     });
 
     $(window).scroll(function () {
-        var pos = $('#calendar').offset().top,
+        var pos = clr.offset().top,
             scroll = $(window).scrollTop();
         if (scroll >= pos + 100) {
             $('#room-title').show();
@@ -190,4 +210,6 @@ $(document).ready(function () {
         }
 
     })
+
+
 });
